@@ -1,7 +1,7 @@
 // Small fetch wrapper. In dev, Vite proxies /api to the backend (see
 // vite.config.js). In production, set VITE_API_BASE_URL at build time to
 // point at your deployed backend (e.g. https://ajaia-backend.onrender.com).
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_PROXY_TARGET || "").replace(/\/$/, "");
 
 function getToken() {
   return localStorage.getItem("ajaia_token");
@@ -13,11 +13,18 @@ async function request(path, { method = "GET", body, isForm = false } = {}) {
   if (token) headers.Authorization = `Bearer ${token}`;
   if (!isForm && body !== undefined) headers["Content-Type"] = "application/json";
 
-  const res = await fetch(`${API_BASE}/api${path}`, {
-    method,
-    headers,
-    body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
-  });
+  const url = `${API_BASE}/api${path}`;
+
+  let res;
+  try {
+    res = await fetch(url, {
+      method,
+      headers,
+      body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
+    });
+  } catch (err) {
+    throw new Error("Unable to reach the server. Please check the backend URL and connection.");
+  }
 
   let data = null;
   const text = await res.text();
