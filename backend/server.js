@@ -1,4 +1,9 @@
-require("dotenv").config();
+try {
+  require("dotenv").config();
+} catch {
+  // dotenv is optional in some deployment environments.
+}
+
 const express = require("express");
 const cors = require("cors");
 
@@ -42,6 +47,9 @@ const PORT = process.env.PORT || 4000;
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Ajaia Docs backend listening on port ${PORT}`);
+  }).on("error", (err) => {
+    console.error("Failed to start server:", err);
+    process.exit(1);
   });
 }
 
